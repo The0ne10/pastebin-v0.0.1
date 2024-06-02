@@ -1,11 +1,13 @@
 package main
 
 import (
+	"app/internal/config"
+	"app/internal/storage/sqlite"
 	"fmt"
+	chi2 "github.com/go-chi/chi/v5"
 	"log/slog"
+	"net/http"
 	"os"
-	"pastebin-v0.0.1/internal/config"
-	"pastebin-v0.0.1/internal/storage/sqlite"
 )
 
 const (
@@ -15,10 +17,8 @@ const (
 )
 
 func main() {
-	// TODO: init cfg
 	cfg := config.MustLoad()
 
-	// TODO: init log/slog
 	log := setupLogger(cfg.Env)
 	log = log.With("Env", cfg.Env)
 
@@ -27,7 +27,6 @@ func main() {
 		log.Debug("debug logging enabled")
 	}
 
-	// TODO: init storage
 	_, err := sqlite.New(cfg.StoragePath)
 	if err != nil {
 		fmt.Printf("error initializing storage %s", err)
@@ -36,6 +35,24 @@ func main() {
 	// TODO: init routes (chi)
 
 	// TODO: run application server
+	router := chi2.NewRouter()
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("hello"))
+	})
+
+	srv := &http.Server{
+		Addr:         cfg.Addr,
+		Handler:      router,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+
+	err = srv.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func setupLogger(env string) *slog.Logger {
