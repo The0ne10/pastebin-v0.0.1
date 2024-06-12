@@ -4,6 +4,7 @@ import (
 	"app/internal/config"
 	"app/internal/delivery/http/handlers/text/getText"
 	"app/internal/delivery/http/handlers/text/saveText"
+	"app/internal/lib/schedule"
 	"app/internal/services/minio/client"
 	"app/internal/storage/sqlite"
 	"context"
@@ -49,16 +50,12 @@ func Run() {
 
 	r := chi.NewRouter()
 
-	// TODO: middlewares (chi)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// TODO: handlers (chi)
 	r.Get("/{alias}", getText.ReadTextHandler(log, storage, minio))
 	r.Post("/", saveText.SaveTextHandler(log, storage, minio))
-
-	// TODO: run application server
 
 	server := &http.Server{
 		Addr:         cfg.Addr,
@@ -67,6 +64,9 @@ func Run() {
 		WriteTimeout: cfg.Timeout,
 		IdleTimeout:  cfg.IdleTimeout,
 	}
+
+	// Run schedule
+	schedule.StartSchedule(log, storage, minio, time.Minute)
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())

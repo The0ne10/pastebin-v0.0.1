@@ -69,3 +69,36 @@ func (s *Storage) FindUUID(alias string) (string, error) {
 
 	return uid, nil
 }
+
+func (s *Storage) DeleteExpired() ([]string, error) {
+	const op = "storage.sqlite.DeleteExpired"
+
+	rows, err := s.db.Query("SELECT uuid FROM aliases WHERE time_ttl < ?", time.Now())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var uids []string
+	for rows.Next() {
+		var uid string
+		if err = rows.Scan(&uid); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		uids = append(uids, uid)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	// Удаляем записи, которые были возвращены
+	if len(uids) > 0 {
+		_, err = s.db.Exec("DELETE FROM aliases WHERE time_ttl < ?", time.Now())
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return uids, nil
+}

@@ -29,9 +29,26 @@ tasks:
     cmds:
         - docker compose -f ../docker-compose.minio.yaml up -d
         - docker compose -f ../docker-compose.app.yaml up
+        -
 
   down:
     desc: "down app and minio docker with env variables"
     cmds:
       - docker compose -f ../docker-compose.app.yaml down
       - docker compose -f ../docker-compose.minio.yaml down
+
+  #Only Minio
+  build-minio:
+    desc: "build only minio"
+    cmd:
+      docker compose -f ../docker-compose.minio.yaml up --build -d
+
+  up-minio:
+    desc: "up only minio"
+    cmd:
+      docker compose -f ../docker-compose.minio.yaml up -d
+
+  down-minio:
+    desc: "down only minio"
+    cmd:
+      docker compose -f ../docker-compose.minio.yaml down

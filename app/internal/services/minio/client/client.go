@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type MinioClient struct {
@@ -88,6 +89,36 @@ func (m *MinioClient) ReadFile(uid string) (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func (m *MinioClient) DeleteFiles(log *slog.Logger, uids []string) error {
+	const op = "minio.client.DeleteFile"
+
+	var (
+		wg sync.WaitGroup
+		mx sync.RWMutex
+	)
+
+	for _, uid := range uids {
+		wg.Add(1)
+		go func(uid string) {
+			defer wg.Done()
+			mx.RLock()
+			_, err := m.S3Client.DeleteObject(&s3.DeleteObjectInput{
+				Bucket: aws.String(m.S3Bucket),
+				Key:    aws.String(fmt.Sprintf("upload/%s.txt", uid)),
+			})
+			log.Info("Delete object", slog.String("uid", uid))
+			if err != nil {
+				log.Error("Failed to delete object", slog.String("uid", uid))
+				return
+			}
+			mx.RUnlock()
+		}(uid)
+	}
+	wg.Wait()
+
+	return nil
 }
 
 func deleteFileAfterUpload(path string) {
