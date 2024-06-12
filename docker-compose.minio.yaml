@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  minio:
+    build:
+      context: .
+      dockerfile: app/docker/minio/Dockerfile
+    container_name: minio
+    volumes:
+      - 'minio_data:/data'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+      MINIO_USE_SSL: "${MINIO_USE_SSL}"
+      MINIO_BUCKET_NAME: "${MINIO_BUCKET_NAME}"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - backend-networks
+
+volumes:
+  minio_data:
+

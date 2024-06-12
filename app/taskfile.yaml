@@ -9,24 +9,29 @@ env:
   MINIO_ROOT_PASSWORD: devdev123
   MINIO_USE_SSL: false
   MINIO_BUCKET_NAME: bucket
+  MINIO_ACCESS_KEY: 123123123
+  MINIO_SECRET_KEY: 123123123
 
 tasks:
   run:
     desc: "Run application with environment variables"
     cmd:
       go run cmd/pastebin/main.go
+
   build:
-    dir: '{{.USER_WORKING_DIR}}'
-    desc: "build minio docker with env variables"
-    cmd:
-      ../docker compose up --build
+    desc: "build app and  minio docker with env variables"
+    cmds:
+      - docker compose -f ../docker-compose.app.yaml up --build
+      - docker compose -f ../docker-compose.minio.yaml up --build -d
+
   up:
-    dir: '{{.USER_WORKING_DIR}}'
-    desc: "run minio docker with env variables"
-    cmd:
-      docker compose up
+    desc: "run app and minio docker with env variables"
+    cmds:
+        - docker compose -f ../docker-compose.minio.yaml up -d
+        - docker compose -f ../docker-compose.app.yaml up
+
   down:
-    dir: '{{.USER_WORKING_DIR}}'
-    desc: "run minio docker with env variables"
-    cmd:
-      docker compose down
+    desc: "down app and minio docker with env variables"
+    cmds:
+      - docker compose -f ../docker-compose.app.yaml down
+      - docker compose -f ../docker-compose.minio.yaml down

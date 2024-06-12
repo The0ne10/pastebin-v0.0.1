@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  golang:
+    build:
+      context: .
+      dockerfile: app/docker/golang/Dockerfile
+    ports:
+      - 81:8080
+    command: ./bin/pastebin
+
